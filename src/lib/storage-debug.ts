@@ -142,6 +142,6 @@ export async function runStorageDiagnostics() {
 
 // Make it available globally in development
 if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
-  (window as any).debugStorage = runStorageDiagnostics
-  (window as any).testImageUrl = testImageUrl
+  (window as any).debugStorage = runStorageDiagnostics;
+  (window as any).testImageUrl = (url: string) => testImageUrl(url);
 } 
