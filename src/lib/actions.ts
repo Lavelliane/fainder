@@ -637,7 +637,7 @@ export async function searchDocuments(formData: FormData): Promise<SearchRespons
 
     // Try enhanced similarity search first, fallback to basic search if it fails
     let searchResults: any[] = []
-    let searchError: any = null
+    const searchError: any = null
 
     try {
       const { data, error } = await supabase
