@@ -2,6 +2,7 @@ import { Suspense } from 'react'
 import { FileUpload } from '@/components/file-upload'
 import { SearchInterface } from '@/components/search-interface'
 import { UserSessionManager } from '@/components/user-session-manager'
+import { FileBrowser } from '@/components/file-browser'
 
 function LoadingFallback() {
   return (
@@ -32,6 +33,7 @@ function AppContent() {
         </div>
         
         <div className="space-y-12">
+          <FileBrowser />
           <FileUpload />
           <SearchInterface />
         </div>

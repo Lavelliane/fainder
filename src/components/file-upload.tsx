@@ -10,6 +10,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { useUser } from '@/hooks/use-user'
 import { uploadDocuments } from '@/lib/actions'
 import type { UploadResponse } from '@/lib/schemas'
+import imageCompression from 'browser-image-compression'
 
 interface UploadedFile {
   id: string
@@ -35,6 +36,35 @@ export function FileUpload() {
     const sizes = ['Bytes', 'KB', 'MB', 'GB']
     const i = Math.floor(Math.log(bytes) / Math.log(k))
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
+  }
+
+  const isImageFile = (file: File) => {
+    return file.type.startsWith('image/') && 
+           ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/bmp'].includes(file.type)
+  }
+
+  const compressImageIfNeeded = async (file: File): Promise<File> => {
+    // Only compress images larger than 1MB
+    const oneMB = 1024 * 1024
+    
+    if (!isImageFile(file) || file.size <= oneMB) {
+      return file
+    }
+
+    try {
+      const options = {
+        maxSizeMB: 1,
+        maxWidthOrHeight: 1920,
+        useWebWorker: true,
+      }
+      
+      const compressedFile = await imageCompression(file, options)
+      return compressedFile
+    } catch (error) {
+      console.error('Image compression failed:', error)
+      // Return original file if compression fails
+      return file
+    }
   }
 
   const uploadFile = async (selectedFiles: File[]) => {
@@ -92,20 +122,23 @@ export function FileUpload() {
     })
   }
 
-  const handleFileSelect = useCallback((selectedFiles: FileList | null) => {
+  const handleFileSelect = useCallback(async (selectedFiles: FileList | null) => {
     if (!selectedFiles) return
 
     const validFiles: File[] = []
     
-    Array.from(selectedFiles).forEach(file => {
+    for (const file of Array.from(selectedFiles)) {
       // Validate file type and size
       const maxSize = 10 * 1024 * 1024 // 10MB
       if (file.size > maxSize) {
         alert(`File ${file.name} is too large. Maximum size is 10MB.`)
-        return
+        continue
       }
-      validFiles.push(file)
-    })
+      
+      // Compress image if needed
+      const processedFile = await compressImageIfNeeded(file)
+      validFiles.push(processedFile)
+    }
 
     if (validFiles.length > 0) {
       uploadFile(validFiles)
@@ -182,7 +215,7 @@ export function FileUpload() {
                     </button>
                   </p>
                   <p className="text-xs text-gray-400">
-                    Supports PDF, DOC, DOCX, TXT, and image files (JPG, PNG, GIF, etc.) up to 10MB
+                    Supports PDF, DOC, DOCX, TXT, and image files (JPG, PNG, GIF, etc.) up to 10MB. Images larger than 1MB will be automatically compressed.
                   </p>
                 </>
               )}
